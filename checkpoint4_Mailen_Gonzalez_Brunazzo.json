@@ -1,0 +1,668 @@
+{
+  "name": "Agente_Modulo4_Integraciones",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Gmail Trigger').first().json.From.match(/<(.+)>/)?.[1] || $('Gmail Trigger').first().json.From }}",
+        "options": {
+          "systemMessage": "=# ROL\nSos un Agente de Triaje de Soporte Técnico para una empresa SaaS B2B.\n\n# ÁMBITO\nTu único ámbito es interpretar mensajes desestructurados de usuarios, identificar el problema principal, clasificar la prioridad y registrar un ticket limpio para que el equipo de soporte pueda actuar.\n\n# OBJETIVO DE LA SESIÓN\nConvertir cada consulta entrante en un registro estructurado con: contacto del usuario, problema, categoría, prioridad y resumen del caso (incluí en el resumen la próxima acción recomendada).\n\n# REGLAS DE USO DE HERRAMIENTAS\n- Usá la herramienta \"Registrar_Ticket_Soporte\" SOLO cuando tengas datos mínimos suficientes: contacto del usuario, categoría del problema y descripción del inconveniente.\n- Si falta un dato clave, hacé una única pregunta clara antes de registrar.\n- No inventes información. Si un dato no fue provisto, marcá \"No informado\".\n- Clasificá la prioridad como ALTA, MEDIA o BAJA. ALTA aplica si hay bloqueo total, impacto en facturación, caída de servicio, pérdida de datos o cliente estratégico.\n- Si el mensaje mezcla varios problemas, priorizá el de mayor impacto y dejá el resto en el resumen.\n- Registrá un solo ticket por conversación.\n\n# REGLAS Y ESCALAMIENTO\n- Si el usuario reporta pérdida de datos, caída generalizada, incidente de seguridad, cliente VIP o amenaza de baja, marcá prioridad ALTA y recomendá revisión humana inmediata.\n- Si el usuario pide una acción destructiva o sensible, detené el ciclo y respondé: \"El caso requiere revisión humana antes de ejecutar acciones sensibles.\"\n\n# LO QUE NO TENÉS PERMITIDO\n- Prometer tiempos de resolución.\n- Cerrar tickets, editar o borrar registros.\n- Otorgar compensaciones o comprometer decisiones comerciales.\n- Modificar datos productivos o ejecutar acciones destructivas.\n- Brindar asesoramiento legal.\n- Enviar correos o mensajes externos al cliente final. Solo registrás el ticket y generás un resumen operativo.\n\n# ESTILO\n- Español rioplatense estándar, claro y profesional.\n- Sin lenguaje inclusivo con terminaciones en -e, -x o @.\n- Breve, específico y orientado a la operación.\n\n{{ $json.contexto_memoria ? $json.contexto_memoria : '' }}",
+          "maxIterations": 6,
+          "returnIntermediateSteps": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        832,
+        0
+      ],
+      "id": "19615af9-0205-4ff4-b4fc-a14982f4b9df",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Registrá un ticket de soporte usando esta herramienta SOLO cuando ya tengas estos tres datos mínimos: Contacto del usuario, Categoria del problema y Problema (descripción del inconveniente).\nSi falta alguno de los tres, no la uses todavía: primero hacé una pregunta al usuario para completarlo.\n\nNombre y Empresa son opcionales: si la persona no los informó, completalos con \"No informado\".\n\nNo uses esta herramienta para actualizar, cerrar o modificar tickets existentes. Solo crea un registro nuevo por cada llamada.\nNo la uses más de una vez por conversación: si ya registraste un ticket, no lo dupliques.",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1DVM9U0m1dQuYmqPWqIklf4OYyQOB0TbMShrKL1ZYQUg",
+          "mode": "list",
+          "cachedResultName": "Sheet IA",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1DVM9U0m1dQuYmqPWqIklf4OYyQOB0TbMShrKL1ZYQUg/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1DVM9U0m1dQuYmqPWqIklf4OYyQOB0TbMShrKL1ZYQUg/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Fecha": "={{ $now.format('dd/MM/yyyy HH:mm') }}",
+            "Contacto": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Contacto', `Email o teléfono que la persona escribió en la conversación. Nunca lo inventes. Si no lo dio, no uses esta herramienta.`, 'string') }}",
+            "Problema": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Problema', `Descripción breve y clara del problema principal, en una sola oración, sin datos personales innecesarios.`, 'string') }}",
+            "Categoria": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Categoria', `Una sola de estas opciones: Acceso, Facturación, Bug, Rendimiento, Consulta, Otro.`, 'string') }}",
+            "Prioridad": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Prioridad', `Exactamente una de estas: ALTA, MEDIA o BAJA. ALTA si el usuario no puede trabajar o hay caída total; MEDIA si hay una función afectada pero puede seguir; BAJA si es una consulta o mejora.`, 'string') }}",
+            "Resumen": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Resumen', `Resumen de 1 o 2 oraciones con el contexto útil para el equipo de soporte: qué pasó, desde cuándo y qué intentó la persona.`, 'string') }}",
+            "Nombre": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Nombre', `Nombre de la persona que escribió, tal como lo informó. Si no lo dijo, escribí \"No informado\". Nunca lo inventes.`, 'string') }}",
+            "Empresa": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Empresa', `Empresa u organización de la persona, tal como la informó. Si no la dijo, escribí \"No informado\". Nunca la inventes.`, 'string') }}",
+            "Proxima_accion": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Proxima_accion', `Acción recomendada para el equipo de soporte, en una sola oración (por ejemplo: \"Revisar logs de acceso y contactar al usuario\"). No prometas tiempos ni soluciones.`, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Fecha",
+              "displayName": "Fecha",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Contacto",
+              "displayName": "Contacto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Problema",
+              "displayName": "Problema",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Categoria",
+              "displayName": "Categoria",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Prioridad",
+              "displayName": "Prioridad",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Resumen",
+              "displayName": "Resumen",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Nombre",
+              "displayName": "Nombre",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Empresa",
+              "displayName": "Empresa",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Proxima_accion",
+              "displayName": "Proxima_accion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        1056,
+        160
+      ],
+      "id": "977d4665-345f-4bd4-a58a-abe551df46b2",
+      "name": "Registrar_Ticket_Soporte",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "4acIttW01xSXHGuo",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-120b",
+        "options": {
+          "temperature": 0.1
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        800,
+        160
+      ],
+      "id": "381a1587-a3a2-444a-9bdc-04b278faf814",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "n8KsjsodFf5i2chR",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Gmail Trigger').first().json.From.match(/<(.+)>/)?.[1] || $('Gmail Trigger').first().json.From }}",
+        "contextWindowLength": 15
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        928,
+        208
+      ],
+      "id": "8d17d727-8018-4d8a-be15-f3927b6df7e7",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {
+          "labelIds": [
+            "Label_7820123665790383766"
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        336,
+        -16
+      ],
+      "id": "aef0c664-d6e3-4fcf-9088-4d6ab5d040fe",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "apZkm6n8GJGQDJ8E",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "83cd30b0-ee35-4fb0-b0b7-97f56963f523",
+              "leftValue": "={{ $json.Subject }}",
+              "rightValue": "Auto-reply",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "12828977-facb-41ce-b8ad-2c2cbd67a51f",
+              "leftValue": "={{ $json.Subject }}",
+              "rightValue": "Out of office",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "876bc433-d8ea-419f-8677-bd3ca65db319",
+              "leftValue": "={{ $json.Subject }}",
+              "rightValue": "Undeliverable",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "40b9e8c2-edb1-477a-bf14-2931a8f38f5e",
+              "leftValue": "={{ $json.From }}",
+              "rightValue": "no-reply@",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        480,
+        -16
+      ],
+      "id": "3edd34ae-3e21-47b2-8b9c-1b2a2a636126",
+      "name": "If1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        672,
+        -96
+      ],
+      "id": "8497fa2c-7f86-41b2-9def-d9c4846d94b6",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5a0ec428-9b79-4d01-bd84-765557e3939e",
+              "name": "From",
+              "value": "={{ $('Gmail Trigger').first().json.From.match(/<(.+)>/)?.[1] || $('Gmail Trigger').first().json.From }}",
+              "type": "string"
+            },
+            {
+              "id": "6dad69d9-f938-439d-9f63-077e9e555916",
+              "name": "Subject",
+              "value": "={{ $('Gmail Trigger').first().json.Subject }}",
+              "type": "string"
+            },
+            {
+              "id": "645dcf8e-4da1-4ee2-b962-aea2b3e0f507",
+              "name": "BodyText",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1200,
+        0
+      ],
+      "id": "6d043093-b24e-466c-9878-02b5c6ab393f",
+      "name": "Limpiar payload"
+    },
+    {
+      "parameters": {
+        "authentication": "appToken",
+        "operation": "search",
+        "filterGroupsUi": {
+          "filterGroupsValues": [
+            {
+              "filtersUi": {
+                "filterValues": [
+                  {
+                    "propertyName": "email|string",
+                    "value": "={{ $json.From }}"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.2,
+      "position": [
+        1424,
+        0
+      ],
+      "id": "c20cb8a0-237f-4a5a-8e73-e1235ab65d3c",
+      "name": "Buscar contacto en CRM",
+      "alwaysOutputData": true,
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "ihOSNPCWxTcuRw6x",
+          "name": "HubSpot Service Key account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "=Re: {{ $('Gmail Trigger').first().json.Subject }}",
+        "message": "={{ $('Limpiar payload').first().json.BodyText }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2032,
+        -16
+      ],
+      "id": "f4d1c8db-e00c-47bb-b1d2-52421cda490f",
+      "name": "Crear borrador de respuesta",
+      "webhookId": "3d36dbf0-f90f-48b8-94af-fe73c39e28b6",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "apZkm6n8GJGQDJ8E",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "#todo-ia-soporte"
+        },
+        "text": "=Nuevo ticket procesado: De: {{ $('Limpiar payload').first().json.From }} Asunto: {{ $('Limpiar payload').first().json.Subject }} Se creó un borrador de respuesta para revisión.",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.7,
+      "position": [
+        2208,
+        -16
+      ],
+      "id": "52b8e759-cfe9-478d-ad47-5e30868459d2",
+      "name": "Send a message",
+      "webhookId": "f2012d0a-3f32-44d5-adc1-bb3181586a39",
+      "credentials": {
+        "slackApi": {
+          "id": "8dgt0Q2kh4wffzOQ",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "dc6d4c87-ef24-4a55-ade9-18fadd0808b2",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1584,
+        0
+      ],
+      "id": "41cef660-d0c4-4547-b5e0-ec6d3d561823",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "authentication": "appToken",
+        "email": "={{ $('Gmail Trigger').first().json.From.match(/<(.+)>/)?.[1] || $('Gmail Trigger').first().json.From }}",
+        "additionalFields": {},
+        "options": {}
+      },
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.2,
+      "position": [
+        1808,
+        -128
+      ],
+      "id": "81d3426f-ed4a-4bac-99d1-40f0294872a1",
+      "name": "Actualizar contacto en CRM",
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "ihOSNPCWxTcuRw6x",
+          "name": "HubSpot Service Key account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "appToken",
+        "email": "={{ $('Gmail Trigger').first().json.From.match(/<(.+)>/)?.[1] || $('Gmail Trigger').first().json.From }}",
+        "additionalFields": {},
+        "options": {}
+      },
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.2,
+      "position": [
+        1808,
+        96
+      ],
+      "id": "2b2c24be-a94e-4025-b018-dc95556902bd",
+      "name": "Crear contacto en CRM",
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "ihOSNPCWxTcuRw6x",
+          "name": "HubSpot Service Key account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Limpiar payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registrar_Ticket_Soporte": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limpiar payload": {
+      "main": [
+        [
+          {
+            "node": "Buscar contacto en CRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar contacto en CRM": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear borrador de respuesta": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Actualizar contacto en CRM",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Crear contacto en CRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Actualizar contacto en CRM": {
+      "main": [
+        [
+          {
+            "node": "Crear borrador de respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear contacto en CRM": {
+      "main": [
+        [
+          {
+            "node": "Crear borrador de respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "09f317b6-da6f-485a-b2f9-8cb9b561babb",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7535225caeb1cebb4f70b1379f21832996be5b795d843e4c264dffa1846240dd"
+  },
+  "nodeGroups": [],
+  "id": "MY2d8rHtEsvenmNp",
+  "tags": []
+}
